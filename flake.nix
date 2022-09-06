@@ -23,18 +23,23 @@
         inherit system;
       };
     in {
-      packages.${system} = {
+      packages = {
         iso = nixos-generators.nixosGenerate {
           inherit system;
           format = "iso";
 
           modules = [
-            "${pkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+
+            (
+              {pkgs, ...}: {
+                environment.systemPackages = with pkgs; [
+                  git
+                ];
+              }
+            )
           ];
 
-          environment.systemPackages = with pkgs; [
-            git
-          ];
         };
       };
     }
