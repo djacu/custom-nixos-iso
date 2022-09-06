@@ -22,6 +22,12 @@
       pkgs = import nixpkgs {
         inherit system;
       };
+
+      sysPkgs = {pkgs}: {
+        environment.systemPackages = with pkgs; [
+          git
+        ];
+      };
     in {
       packages = {
         iso = nixos-generators.nixosGenerate {
@@ -30,16 +36,8 @@
 
           modules = [
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-
-            (
-              {pkgs, ...}: {
-                environment.systemPackages = with pkgs; [
-                  git
-                ];
-              }
-            )
+            (sysPkgs {inherit pkgs;})
           ];
-
         };
       };
     }
