@@ -2,53 +2,41 @@
   description = "Custom NixOS ISOs";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs.nixos-generators.url = "github:nix-community/nixos-generators";
+  inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = {
     self,
     nixpkgs,
-  }: {
-    # packages.x86_64-linux.hello = nixpkgs.legacyPackages.x86_64-linux.hello;
-    # defaultPackage.x86_64-linux = self.packages.x86_64-linux.hello;
-
-    nixosConfigurations = let
-      # Shared base configuration.
-      exampleBase = {
-        system = "x86_64-linux";
-        modules = [
-          # Common system modules...
-        ];
+    flake-utils,
+    nixos-generators,
+  }: let
+    SYSTEMS = [
+      flake-utils.lib.system.x86_64-linux
+      # TODO - Work on Darwin and get the installer working properly
+      # flake-utils.lib.system.x86_64-darwin
+    ];
+  in (flake-utils.lib.eachSystem SYSTEMS (
+    system: let
+      pkgs = import nixpkgs {
+        inherit system;
       };
     in {
-      exampleIso = nixpkgs.lib.nixosSystem {
-        inherit (exampleBase) system;
-        modules =
-          exampleBase.modules
-          ++ [
-            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+      packages.${system} = {
+        iso = nixos-generators.nixosGenerate {
+          inherit system;
+          format = "iso";
 
-            ({ pkgs, ...}: {
-              environment.systemPackages = with pkgs; [
-                git
-              ];
-            })
-
-#            ({nixpkgs, ...}: {
-#              imports = [
-#                "${nixpkgs}/nixos/modules/programs/git.nix"
-#              ];
-#              # programs.git.enable = true;
-#            })
+          modules = [
+            "${pkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
           ];
-      };
 
-      example = nixpkgs.lib.nixosSystem {
-        inherit (exampleBase) system;
-        modules =
-          exampleBase.modules
-          ++ [
-            # Modules for installed systems only.
+          environment.systemPackages = with pkgs; [
+            git
           ];
+        };
       };
-    };
-  };
+    }
+  ));
 }
