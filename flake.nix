@@ -19,14 +19,8 @@
     ];
   in (flake-utils.lib.eachSystem SYSTEMS (
     system: let
-      pkgs = import nixpkgs {
-        inherit system;
-      };
-
-      sysPkgs = {pkgs}: {
-        environment.systemPackages = with pkgs; [
-          git
-        ];
+      userModule = {
+        programs.git.enable = true;
       };
     in {
       packages = {
@@ -36,7 +30,7 @@
 
           modules = [
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-            (sysPkgs {inherit pkgs;})
+            userModule
           ];
         };
       };
